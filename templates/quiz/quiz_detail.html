@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ quiz.topic }}</title>
+  <link rel="stylesheet" href="{% static 'quiz/style.css' %}">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: #90b0d3;
+    }
+    #question-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    }
+    #question-container {
+      opacity: 1;
+      z-index: 5;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .record_btn {
+      height: 40px;
+      padding: 0 13px;
+      font-size: 18px;
+      font-weight: 400;
+      cursor: pointer;
+      outline: none;
+      color: #fff;
+      border-radius: 5px;
+      background: #007bff;
+      border: 1px solid #007bff;
+      line-height: 10px;
+      transform: scale(0.95);
+      transition: all 0.3s ease;
+    }
+    #question-container {
+      width: 80vw;
+      max-width: 1280px;
+      background: #fff;
+      border-radius: 5px;
+      aspect-ratio: 16 / 9;
+    }
+    #question-container header {
+      position: relative;
+      z-index: 2;
+      height: 70px;
+      padding: 0 30px;
+      background: #fff;
+      border-radius: 5px 5px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0px 3px 5px 1px rgba(0, 0, 0, 0.1);
+    }
+    #question-container header .title {
+      padding: 5px 10px;
+      background-color: #ed9508;
+      color: #000;
+      border: 1px solid black;
+      border-radius: 5px;
+      padding: 5px;
+      bottom: 10px;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      align-items: center;
+    }
+    #question-container header .timer {
+      color: #004085;
+      background: #cce5ff;
+      border: 1px solid #b8daff;
+      height: 45px;
+      padding: 0 8px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 145px;
+    }
+    #question-container header .timer .time_left_txt {
+      font-weight: 400;
+      font-size: 17px;
+      user-select: none;
+    }
+    #question-container header .timer .timer_sec {
+      font-size: 18px;
+      font-weight: 500;
+      height: 30px;
+      width: 45px;
+      color: #fff;
+      border-radius: 5px;
+      line-height: 30px;
+      text-align: center;
+      background: #343a40;
+      border: 1px solid #343a40;
+      user-select: none;
+    }
+    section {
+      padding: 25px 30px 20px 30px;
+      background: #fff;
+    }
+    section .que_text {
+      font-size: 2em;
+      font-weight: 600;
+      margin-top: 30px;
+    }
+    section .option_list {
+      padding: 20px 0px;
+      margin-left: 30px;
+      margin-top: 20px;
+      display: block;
+    }
+    section .option_list .options {
+      background: aliceblue;
+      border: 1px solid #84c5fe;
+      background: #94d7cb;
+      border: 1px solid #84c5fe;
+      border-radius: 5px;
+      padding: 8px 15px;
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.3s linear;
+    }
+    section .option_list .options.correct {
+      background: #07fe40;
+      border: 1px solid #c3e6cb;
+    }
+    footer {
+      padding: 0 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid lightgrey;
+      position: absolute;
+      display: flex;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #f2f2f2;
+    }
+    footer .total_que span {
+      display: flex;
+      user-select: none;
+    }
+    footer .progress {
+      font-weight: 500;
+      padding: 0 5px;
+      font-size: 20px;
+      background: #94d7cb;
+      font-weight: 600;
+      border: 1px solid #007bff;
+      border-radius: 5px;
+    }
+    footer .total_que span p:first-child {
+      padding-left: 0px;
+    }
+    .logo {
+      height: 60px;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    #result {
+      font-size: 1.2em;
+      color: #155724;
+      margin-top: 20px;
+      padding: 10px;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 5px;
+    }
+    .btn {
+      display: none;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 20px auto;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="record-button" class="record_btn" onclick="toggleRecording()">
+      Start Recording
+    </button>
+
+    <div id="question-container">
+      <header>
+        <h4 id="quiz-topic" class="title">{{ quiz.topic }}</h4>
+        <div class="timer">
+          <div class="time_left_txt">Time Left</div>
+          <div class="timer_sec" id="timer">15</div>
+        </div>
+      </header>
+
+      <section>
+        <h2 class="que_text" id="question"></h2>
+        <div id="answer-buttons" class="option_list"></div>
+        <div id="result" class="result"></div>
+      </section>
+
+      <footer>
+        <div class="progress" id="progress"></div>
+        <img class="logo" onclick="startQuiz()" src="{% static 'quiz/channels4_profile.jpg' %}" alt="Logo" />
+      </footer>
+
+      <button id="reset-button" class="btn" onclick="resetGame()">
+        Play Again
+      </button>
+    </div>
+  </div>
+
+  <audio id="background-sound" loop>
+    <source src="{% static 'quiz/Ethio_Quiz_hHukb.mp3' %}" type="audio/mp3" />
+  </audio>
+  <audio id="delay-sound">
+    <source src="{% static 'quiz/Typing.mp3' %}" type="audio/mp3" />
+  </audio>
+  <audio id="question-sound">
+    <source src="{% static 'quiz/timer.mp3' %}" type="audio/mp3" />
+  </audio>
+  <audio id="correct-sound">
+    <source src="{% static 'quiz/Correct.mp3' %}" type="audio/mp3" />
+  </audio>
+
+  <script>
+    const questions = {{ questions_json|safe }};
+    const topic = "{{ quiz.topic }}";
+    let currentQuestionIndex = 0;
+    let timer;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+    let canvas, ctx, captureInterval;
+    const qualityScale = 2;
+    const captureIntervalMs = 100;
+    const frameRate = 30;
+
+    const backgroundSound = document.getElementById("background-sound");
+    const delaySound = document.getElementById("delay-sound");
+    const questionSound = document.getElementById("question-sound");
+    const correctSound = document.getElementById("correct-sound");
+
+    function startQuiz() {
+      backgroundSound.play();
+      toggleRecording();
+      startGame();
+    }
+
+    function startGame() {
+      currentQuestionIndex = 0;
+      document.getElementById("reset-button").style.display = "none";
+      document.getElementById("result").innerText = "";
+      document.getElementById("progress").innerText = "";
+      document.getElementById("timer").innerText = "15s";
+      showQuestion(questions[currentQuestionIndex]);
+    }
+
+    function showQuestion(question) {
+      delaySound.currentTime = 0;
+      delaySound.play();
+
+      document.getElementById("question").innerText = question.question;
+      const answerButtons = document.getElementById("answer-buttons");
+      answerButtons.innerHTML = "";
+
+      const questionElement = document.getElementById("question");
+      questionElement.style.opacity = 0;
+      setTimeout(() => {
+        questionElement.style.opacity = 1;
+      }, 100);
+
+      question.answers.forEach((answer, index) => {
+        const options = document.createElement("h2");
+        options.innerText = answer;
+        options.classList.add("options");
+        answerButtons.appendChild(options);
+
+        setTimeout(() => {
+          options.style.opacity = 1;
+        }, 700 * (index + 1));
+      });
+
+      document.getElementById("progress").innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+
+      setTimeout(() => {
+        questionSound.currentTime = 0;
+        questionSound.play();
+
+        let timeLeft = 15;
+        timer = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            displayCorrectAnswer(question.correct);
+            setTimeout(nextQuestion, 5000);
+          } else {
+            document.getElementById("timer").innerText = `${timeLeft--}`;
+          }
+        }, 1000);
+      }, 4000);
+    }
+
+    function displayCorrectAnswer(correctAnswer) {
+      correctSound.currentTime = 0;
+      correctSound.play();
+      const answerButtons = document.getElementById("answer-buttons");
+
+      answerButtons.childNodes.forEach((options) => {
+        if (options.innerText === correctAnswer) {
+          options.classList.add("correct");
+        }
+        options.disabled = true;
+      });
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerText = `Correct answer: ${correctAnswer}`;
+    }
+
+    function nextQuestion() {
+      clearInterval(timer);
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < questions.length) {
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerText = "";
+        document.getElementById("timer").innerText = "15";
+        const answerButtons = document.getElementById("answer-buttons");
+        answerButtons.innerHTML = "";
+        showQuestion(questions[currentQuestionIndex]);
+      } else {
+        endQuiz();
+      }
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      if (isRecording) {
+        mediaRecorder.stop();
+        clearInterval(captureInterval);
+        isRecording = false;
+        document.getElementById("record-button").innerText = "Start Recording";
+      }
+
+      const questionContainer = document.getElementById("question-container");
+      questionContainer.innerHTML = `
+        <h2>Quiz Completed!</h2>
+        <p>Your score: ${calculateScore()} / ${questions.length}</p>
+      `;
+
+      const resetButton = document.getElementById("reset-button");
+      resetButton.style.display = "block";
+    }
+
+    function calculateScore() {
+      return 0;
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
+    window.onload = function () {
+      document.getElementById("reset-button").style.display = "none";
+    };
+
+    async function toggleRecording() {
+      const container = document.getElementById("question-container");
+      const recordButton = document.getElementById("record-button");
+
+      if (isRecording) {
+        stopRecording();
+      } else {
+        try {
+          recordButton.innerText = "Preparing...";
+          
+          canvas = document.createElement("canvas");
+          canvas.width = container.offsetWidth * qualityScale;
+          canvas.height = container.offsetHeight * qualityScale;
+          ctx = canvas.getContext("2d");
+          
+          const canvasStream = canvas.captureStream(frameRate);
+          
+          let audioStream = null;
+          try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch(e) {
+            console.log("No mic available");
+          }
+          
+          const tracks = [...canvasStream.getVideoTracks()];
+          if (audioStream) tracks.push(...audioStream.getAudioTracks());
+          
+          const combinedStream = new MediaStream(tracks);
+          mediaRecorder = new MediaRecorder(combinedStream, { mimeType: "video/webm" });
+          
+          recordedChunks = [];
+          mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${topic.replace(/\s+/g, "_")}.webm`;
+            a.click();
+          };
+          
+          captureInterval = setInterval(async () => {
+            const img = await html2canvas(container, { scale: qualityScale });
+            ctx.drawImage(img, 0, 0);
+          }, captureIntervalMs);
+          
+          mediaRecorder.start();
+          recordButton.innerText = "Stop Recording";
+          isRecording = true;
+        } catch(error) {
+          console.error(error);
+          alert("Error: " + error.message);
+          recordButton.innerText = "Start Recording";
+        }
+      }
+    }
+
+    function stopRecording() {
+      clearInterval(captureInterval);
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+      document.getElementById("record-button").innerText = "Start Recording";
+      isRecording = false;
+    }
+  </script>
+</body>
+</html>
